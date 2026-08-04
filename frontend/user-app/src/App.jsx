@@ -573,7 +573,8 @@ function TrackingScreen({ orderId, onStatusChange }) {
       if (onStatusChange) onStatusChange(status);
     };
 
-    const ws = new WebSocket(`ws://localhost:8000/api/v1/orders/ws/${orderId}`);
+    const wsBase = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/^http/, 'ws');
+    const ws = new WebSocket(`${wsBase}/api/v1/orders/ws/${orderId}`);
     ws.onopen = () => setConnected(true);
     ws.onmessage = (e) => {
       const d = JSON.parse(e.data);

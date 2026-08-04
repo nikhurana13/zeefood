@@ -129,7 +129,8 @@ function OrderQueuePage({ orders, setOrders }) {
 
   useEffect(() => {
     apiFetch(`/api/v1/orders/restaurant/${RESTAURANT_ID}`).then(setOrders).catch(() => {});
-    const ws = new WebSocket(`ws://localhost:8000/api/v1/orders/ws/restaurant/${RESTAURANT_ID}`);
+    const wsBase = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/^http/, 'ws');
+    const ws = new WebSocket(`${wsBase}/api/v1/orders/ws/restaurant/${RESTAURANT_ID}`);
     ws.onmessage = (e) => { const d = JSON.parse(e.data); if (d.type === 'NEW_ORDER') { setOrders(p => [d.order, ...p]); toast.success('🍽️ New order received!'); }};
     wsRef.current = ws;
     return () => ws.close();

@@ -33,7 +33,8 @@ export default function OrdersPage() {
     api.getAllOrders(RESTAURANT_ID, statusFilter || null).then(setOrders).catch(() => {});
 
     // WebSocket for live order updates
-    const ws = new WebSocket(`ws://localhost:8000/api/v1/orders/ws/restaurant/${RESTAURANT_ID}`);
+    const wsBase = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/^http/, 'ws');
+    const ws = new WebSocket(`${wsBase}/api/v1/orders/ws/restaurant/${RESTAURANT_ID}`);
     ws.onmessage = (e) => {
       const data = JSON.parse(e.data);
       if (data.type === 'NEW_ORDER') {
