@@ -35,7 +35,7 @@ accelerate>=0.30.0
 sentencepiece>=0.2.0
 
 # --- AI/ML: Audio Emotion ---
-openai-whisper>=20231117
+openai-whisper @ git+https://github.com/openai/whisper.git
 librosa>=0.10.2
 soundfile>=0.12.1
 numpy>=1.26.4
