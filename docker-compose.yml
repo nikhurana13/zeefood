@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  # ── FastAPI Backend ─────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: zefood-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/data:/app/data          # FAISS index + knowledge base persistence
+      - ./backend:/app                    # Hot reload for dev (remove for prod)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── User App (React) ─────────────────────────────────
+  user-app:
+    build:
+      context: ./frontend/user-app
+      dockerfile: Dockerfile
+    container_name: zefood-user-app
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # ── Staff Panel (React) ──────────────────────────────
+  staff-panel:
+    build:
+      context: ./frontend/staff-panel
+      dockerfile: Dockerfile
+    container_name: zefood-staff-panel
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # ── Admin Panel (React) ──────────────────────────────
+  admin-panel:
+    build:
+      context: ./frontend/admin-panel
+      dockerfile: Dockerfile
+    container_name: zefood-admin-panel
+    ports:
+      - "3002:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+
+networks:
+  default:
+    name: zefood-network

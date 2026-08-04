@@ -1,0 +1,49 @@
+# ============================================================
+# ZEfood Backend — .gitignore
+# ============================================================
+
+# Python virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables (contains real API keys and credentials)
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# FAISS index (auto-generated, can be rebuilt)
+data/faiss_index/
+
+# Pytest cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# PyCharm / VSCode / Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Firebase service account keys (NEVER commit)
+*-firebase-adminsdk-*.json
+serviceAccountKey.json

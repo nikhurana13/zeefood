@@ -1,0 +1,4 @@
+# This directory is intentionally empty.
+# The knowledge base .txt files go here.
+# Example: default_faq.txt (auto-created by rag_service.py on first run)
+# Add your own FAQ or policy documents as plain .txt files.
