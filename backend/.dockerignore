@@ -1,0 +1,53 @@
+# ============================================================
+# ZEfood Backend — .dockerignore
+# Keeps Docker build context small and secure
+# ============================================================
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Environment variables (secrets — injected at runtime)
+.env
+
+# Test files
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+pytest.ini
+
+# FAISS index (rebuilt at startup or mounted as volume)
+data/faiss_index/
+
+# Logs
+*.log
+
+# Firebase service account keys (NEVER in image)
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
+
+# Editor artifacts
+.idea/
+.vscode/
+*.swp
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,4 +1,17 @@
-# ZEfood Platform — Complete Setup Guide
+# ZEfood Platform — Hotel & Food Delivery Management
+
+[![CI](https://github.com/nikhurana13/zeefood/actions/workflows/ci.yml/badge.svg)](https://github.com/nikhurana13/zeefood/actions/workflows/ci.yml)
+[![Deploy Backend](https://github.com/nikhurana13/zeefood/actions/workflows/deploy-backend.yml/badge.svg)](https://github.com/nikhurana13/zeefood/actions/workflows/deploy-backend.yml)
+[![Deploy Frontends](https://github.com/nikhurana13/zeefood/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/nikhurana13/zeefood/actions/workflows/deploy-frontend.yml)
+
+**Deploy in one click:**
+
+[![Deploy Backend on Railway](https://railway.app/button.svg)](https://railway.app/new/template)
+[![Deploy User App on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nikhurana13/zeefood&root-directory=frontend/user-app)
+
+> 📖 **Full deployment guide**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+---
 
 ## 🍽️ Overview
 

@@ -1,0 +1,82 @@
+name: Deploy Frontends → Vercel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  # ── User App ───────────────────────────────────────────────
+  deploy-user-app:
+    name: Deploy User App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel (User App)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_USER_APP_PROJECT_ID }}
+          working-directory: ./frontend/user-app
+          vercel-args: "--prod"
+        env:
+          VITE_API_BASE: ${{ secrets.BACKEND_URL }}
+
+  # ── Staff Panel ────────────────────────────────────────────
+  deploy-staff-panel:
+    name: Deploy Staff Panel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel (Staff Panel)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_STAFF_PANEL_PROJECT_ID }}
+          working-directory: ./frontend/staff-panel
+          vercel-args: "--prod"
+        env:
+          VITE_API_BASE: ${{ secrets.BACKEND_URL }}
+
+  # ── Admin Panel ────────────────────────────────────────────
+  deploy-admin-panel:
+    name: Deploy Admin Panel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel (Admin Panel)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_ADMIN_PANEL_PROJECT_ID }}
+          working-directory: ./frontend/admin-panel
+          vercel-args: "--prod"
+        env:
+          VITE_API_BASE: ${{ secrets.BACKEND_URL }}
+
+# ================================================================
+# Required GitHub Repository Secrets:
+# ─────────────────────────────────────
+# VERCEL_TOKEN               — from vercel.com → Settings → Tokens
+# VERCEL_ORG_ID              — from vercel.com → Settings → General → Team ID
+# VERCEL_USER_APP_PROJECT_ID — from Vercel project settings
+# VERCEL_STAFF_PANEL_PROJECT_ID
+# VERCEL_ADMIN_PANEL_PROJECT_ID
+# BACKEND_URL                — e.g., https://zefood-backend.up.railway.app
+# ================================================================
