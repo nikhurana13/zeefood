@@ -1,212 +1,191 @@
-# ZEfood — Deployment Guide
+# ZEfood — Deployment Guide (Render + Vercel)
 
 ## Architecture
 
 ```
                     GitHub Repository
-                          │
-              ┌───────────┼───────────┐
-              │           │           │
-         CI Tests      Build        Push
-              │           │           │
-              ▼           ▼           ▼
-         pytest       npm build   Docker Image
-                                (ghcr.io)
-                                    │
-                               ┌────┴────┐
-                               │         │
-                           Railway    Vercel
-                          (Backend)  (3 Frontends)
+                    (nikhurana13/zeefood)
+                           │
+           ┌───────────────┼───────────────┐
+           │               │               │
+       CI Tests        Auto-Deploy    Auto-Deploy
+       (GitHub         (on push)      (on push)
+        Actions)           │               │
+                           ▼               ▼
+                        Render          Vercel
+                       (Backend)      (3 Frontends)
+                      FastAPI API    user-app
+                      Port: auto     staff-panel
+                                     admin-panel
 ```
 
 ---
 
-## 🚀 Option 1: Deploy to Railway + Vercel (Recommended)
+## 🚀 Step 1 — Deploy Backend on Render
 
-### Step 1: Push to GitHub
+### 1a. Connect GitHub to Render
+
+1. Go to **[render.com](https://render.com)** → Sign up / Log in
+2. Click **New +** → **Web Service**
+3. Connect your GitHub account → Select **`nikhurana13/zeefood`**
+4. Set the following:
+
+| Setting | Value |
+|---------|-------|
+| **Name** | `zefood-backend` |
+| **Root Directory** | `backend` |
+| **Runtime** | `Docker` |
+| **Branch** | `main` |
+| **Plan** | Free (or Starter for always-on) |
+
+5. Click **Create Web Service**
+
+---
+
+### 1b. Set Environment Variables in Render Dashboard
+
+Go to your service → **Environment** tab → Add the following:
+
+#### 🔑 Secrets (paste full JSON content for Firebase credentials)
+
+| Key | Value |
+|-----|-------|
+| `FIREBASE_USER_APP_CREDENTIALS` | *Paste entire content of `zeefood-c72cd-firebase-adminsdk-*.json`* |
+| `FIREBASE_STAFF_CREDENTIALS` | *Paste entire content of `staff-1ac19-firebase-adminsdk-*.json`* |
+| `FIREBASE_ADMIN_CREDENTIALS` | *Paste entire content of `admin-ca01a-firebase-adminsdk-*.json`* |
+| `JWT_SECRET_KEY` | `e81648c7ea4a1c533adfe4486b974f3328c07e7f97f3ce2a7387396263f274b7` |
+| `GEMINI_API_KEY` | *(your Gemini API key)* |
+| `RAZORPAY_KEY_ID` | `rzp_test_TKSJKw0ABEcjZI` |
+| `RAZORPAY_KEY_SECRET` | *(your Razorpay secret)* |
+
+#### App Settings
+
+| Key | Value |
+|-----|-------|
+| `APP_ENV` | `production` |
+| `DEBUG` | `false` |
+| `FIREBASE_USER_APP_PROJECT_ID` | `zeefood-c72cd` |
+| `FIREBASE_STAFF_PROJECT_ID` | `staff-1ac19` |
+| `FIREBASE_ADMIN_PROJECT_ID` | `admin-ca01a` |
+| `USER_APP_STORAGE_BUCKET` | `zeefood-c72cd.appspot.com` |
+| `CORS_ORIGINS` | `https://zefood-user.vercel.app,https://zefood-staff.vercel.app,https://zefood-admin.vercel.app` |
+| `GEMINI_MODEL` | `gemini-1.5-flash` |
+| `WHISPER_MODEL_SIZE` | `base` |
+
+> **Tip for Firebase JSON**: Open your downloaded `.json` file, select all, copy, and paste the entire content as the value of `FIREBASE_USER_APP_CREDENTIALS` etc. The backend auto-detects whether the value is a JSON string or file path.
+
+6. Click **Save Changes** → Render will rebuild and deploy.
+
+Your backend URL will be: **`https://zefood-backend.onrender.com`**
+(confirm the exact URL in Render dashboard)
+
+---
+
+## 🌐 Step 2 — Deploy Frontends on Vercel
+
+Deploy each of the 3 React apps as a separate Vercel project.
+
+### User App
 
 ```bash
-cd zefood
-git add .
-git commit -m "chore: prepare for deployment"
-git remote add origin https://github.com/nikhurana13/zeefood.git
-git push -u origin main
-```
-
----
-
-### Step 2: Deploy Backend to Railway
-
-1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**
-2. Select your `zefood` repository
-3. Railway will auto-detect the `backend/` folder — set **Root Directory** to `backend`
-4. Add environment variables in the Railway dashboard:
-
-```
-FIREBASE_USER_APP_CREDENTIALS=<JSON content or path>
-FIREBASE_STAFF_CREDENTIALS=<JSON content or path>
-FIREBASE_ADMIN_CREDENTIALS=<JSON content or path>
-FIREBASE_USER_APP_PROJECT_ID=zeefood-c72cd
-FIREBASE_STAFF_PROJECT_ID=staff-1ac19
-FIREBASE_ADMIN_PROJECT_ID=admin-ca01a
-JWT_SECRET_KEY=<generate with: openssl rand -hex 32>
-GEMINI_API_KEY=<from Google AI Studio>
-RAZORPAY_KEY_ID=<from Razorpay dashboard>
-RAZORPAY_KEY_SECRET=<from Razorpay dashboard>
-APP_ENV=production
-DEBUG=false
-CORS_ORIGINS=https://zefood-user.vercel.app,https://zefood-staff.vercel.app,https://zefood-admin.vercel.app
-```
-
-5. Copy your Railway backend URL (e.g., `https://zefood-backend.up.railway.app`)
-
-> **Tip for Firebase credentials**: Instead of file paths, encode your JSON as a string and update `config.py` to parse inline JSON, OR use Railway's volume to mount the JSON files.
-
----
-
-### Step 3: Deploy Frontends to Vercel
-
-Deploy each frontend as a separate Vercel project:
-
-#### User App
-```bash
-cd frontend/user-app
+cd "C:\Users\n3297\OneDrive\Desktop\hotel management\zefood\frontend\user-app"
 npx vercel --prod
-# When prompted:
-#   Framework: Vite
-#   Root directory: ./
-# Set environment variable: VITE_API_BASE = https://your-backend.up.railway.app
 ```
 
-#### Staff Panel
-```bash
-cd frontend/staff-panel
-npx vercel --prod
-# Set: VITE_API_BASE = https://your-backend.up.railway.app
-```
+When Vercel asks for settings:
+- **Framework**: Vite
+- **Root directory**: `./` (current directory)
+- **Build command**: `npm run build`
+- **Output directory**: `dist`
 
-#### Admin Panel
+Then add the environment variable in Vercel Dashboard:
+- `VITE_API_BASE` = `https://zefood-backend.onrender.com`
+
+### Staff Panel
+
 ```bash
-cd frontend/admin-panel
+cd "..\staff-panel"
 npx vercel --prod
-# Set: VITE_API_BASE = https://your-backend.up.railway.app
+```
+Add env var: `VITE_API_BASE` = `https://zefood-backend.onrender.com`
+
+### Admin Panel
+
+```bash
+cd "..\admin-panel"
+npx vercel --prod
+```
+Add env var: `VITE_API_BASE` = `https://zefood-backend.onrender.com`
+
+---
+
+## 🔄 Step 3 — Update CORS After Vercel Deploy
+
+Once you have the actual Vercel URLs (e.g., `https://zefood-user-abc123.vercel.app`),
+go back to Render → Environment → update `CORS_ORIGINS`:
+
+```
+https://zefood-user-abc123.vercel.app,https://zefood-staff-abc123.vercel.app,https://zefood-admin-abc123.vercel.app
 ```
 
 ---
 
-### Step 4: Configure GitHub Secrets for CI/CD
+## ⚙️ Step 4 — Set Up GitHub Actions for Auto-Deploy
 
-Go to your GitHub repo → **Settings** → **Secrets and variables** → **Actions** and add:
+### CI runs automatically on every push ✅
 
-| Secret | Value |
-|--------|-------|
-| `RAILWAY_TOKEN` | Railway → Account Settings → Tokens → New Token |
-| `VERCEL_TOKEN` | Vercel → Settings → Tokens → Create |
-| `VERCEL_ORG_ID` | Vercel → Settings → General → Team ID |
-| `VERCEL_USER_APP_PROJECT_ID` | Vercel project settings for user-app |
-| `VERCEL_STAFF_PANEL_PROJECT_ID` | Vercel project settings for staff-panel |
-| `VERCEL_ADMIN_PANEL_PROJECT_ID` | Vercel project settings for admin-panel |
-| `BACKEND_URL` | `https://your-backend.up.railway.app` |
+### For CD (auto-deploy on push to main), add these GitHub Secrets:
+Go to: **github.com/nikhurana13/zeefood → Settings → Secrets and variables → Actions**
 
-After adding secrets, every push to `main` will automatically deploy.
+| Secret | How to get it |
+|--------|--------------|
+| `RENDER_DEPLOY_HOOK_URL` | Render dashboard → Service → Settings → Deploy Hook → Copy URL |
+| `VERCEL_TOKEN` | vercel.com → Settings → Tokens → Create |
+| `VERCEL_ORG_ID` | vercel.com → Settings → General → Team ID |
+| `VERCEL_USER_APP_PROJECT_ID` | Vercel project → Settings → Project ID |
+| `VERCEL_STAFF_PANEL_PROJECT_ID` | Vercel project → Settings → Project ID |
+| `VERCEL_ADMIN_PANEL_PROJECT_ID` | Vercel project → Settings → Project ID |
+| `BACKEND_URL` | `https://zefood-backend.onrender.com` |
 
 ---
 
-## 🐳 Option 2: Self-Hosted VPS with Docker Compose
-
-### Prerequisites
-- Ubuntu 22.04 VPS (DigitalOcean, Hetzner, AWS EC2, etc.)
-- Docker + Docker Compose installed
-- Domain name (optional but recommended)
-
-### Deployment
+## 🐳 Option B — Self-Hosted VPS with Docker Compose
 
 ```bash
-# On your VPS
-git clone https://github.com/YOUR_USERNAME/zefood.git
-cd zefood
+# On your Ubuntu VPS
+git clone https://github.com/nikhurana13/zeefood.git
+cd zeefood
 
-# Configure backend secrets
+# Fill in your secrets
 cp backend/.env.example backend/.env
-nano backend/.env   # Fill in all values
+nano backend/.env
 
-# Set your backend URL
-export BACKEND_URL=http://YOUR_VPS_IP:8000
-# Or if you have a domain:
-# export BACKEND_URL=https://api.yourdomain.com
-
-# Deploy (production mode)
+# Deploy production stack
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
-# Check status
-docker-compose ps
-docker-compose logs backend
+# Check logs
+docker-compose logs -f backend
 ```
-
-Services will be available at:
-- Backend: `http://YOUR_VPS_IP:8000`
-- User App: `http://YOUR_VPS_IP:3000`
-- Staff Panel: `http://YOUR_VPS_IP:3001`
-- Admin Panel: `http://YOUR_VPS_IP:3002`
 
 ---
 
-## 🔑 Firebase Credentials on Production
-
-Firebase requires service account JSON files. For production:
-
-**Option A — Inline JSON (Railway-friendly)**
-
-Update `backend/app/services/firebase.py` to read credentials from environment variable instead of file path:
-
-```python
-import json, os
-creds_json = json.loads(os.environ["FIREBASE_USER_APP_CREDENTIALS"])
-cred = firebase_admin.credentials.Certificate(creds_json)
-```
-
-Then set `FIREBASE_USER_APP_CREDENTIALS` to the entire JSON string.
-
-**Option B — Volume mount (Docker/VPS)**
-
-1. Copy your Firebase JSON files to the VPS
-2. Mount them via docker-compose volumes:
-```yaml
-backend:
-  volumes:
-    - /etc/zefood/firebase:/app/credentials
-```
-3. Set `FIREBASE_USER_APP_CREDENTIALS=/app/credentials/user-firebase-adminsdk.json`
-
----
-
-## 🔒 Generating a Strong JWT Secret
+## 📊 Verify Deployment
 
 ```bash
-openssl rand -hex 32
-# Example output: a3f8d2c1b4e9f7a2...
-```
+# Check backend health
+curl https://zefood-backend.onrender.com/health
 
-Set this as `JWT_SECRET_KEY` in your environment.
+# Expected response:
+# {"status":"healthy","services":{"firebase":"connected","rag":"ready",...}}
+```
 
 ---
 
-## 📊 Monitoring
+## 🔒 Security Checklist
 
-- **Backend health**: `GET https://your-backend.up.railway.app/health`
-- **API docs**: `GET https://your-backend.up.railway.app/docs`
-- **Railway dashboard**: Real-time logs and metrics
-- **Vercel dashboard**: Deployment history and analytics
-
----
-
-## 🔄 Updating the Deployment
-
-```bash
-# Simply push to main — GitHub Actions handles the rest
-git add .
-git commit -m "feat: your changes"
-git push origin main
-```
-
-CI will run tests, then CD will auto-deploy to Railway and Vercel.
+- [ ] `backend/.env` is NOT committed (already in `.gitignore` ✅)
+- [ ] Firebase JSON files are NOT committed (already in `.gitignore` ✅)
+- [ ] JWT secret is set to a strong random value
+- [ ] `DEBUG=false` and `APP_ENV=production` in Render env vars
+- [ ] CORS_ORIGINS lists only your actual Vercel URLs (no `localhost` in production)
+- [ ] Revoke the GitHub PAT used for the initial push (github.com/settings/tokens)

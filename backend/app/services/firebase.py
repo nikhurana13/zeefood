@@ -1,7 +1,16 @@
 """
 ZEfood Backend — Firebase Admin SDK Service
-Manages connections to all three Firebase projects
+Manages connections to all three Firebase projects.
+
+Credential resolution order:
+  1. If the value looks like a JSON string (starts with '{') → parse inline JSON
+  2. Otherwise treat as a file path (legacy / Docker volume mount)
+
+This allows Render.com deployments to pass the full JSON content as an
+environment variable without needing to mount files.
 """
+import json
+import os
 import firebase_admin
 from firebase_admin import credentials, firestore, auth, storage
 from typing import Optional
@@ -21,6 +30,28 @@ _staff_db: Optional[firestore.Client] = None
 _admin_db: Optional[firestore.Client] = None
 
 
+def _resolve_credential(value: str) -> credentials.Certificate:
+    """
+    Accepts either:
+    - A JSON string: '{"type": "service_account", ...}'
+    - A file path:   '/app/credentials/service-account.json'
+    Returns a Firebase credentials.Certificate object.
+    """
+    stripped = value.strip()
+    if stripped.startswith("{"):
+        # Inline JSON — parse directly
+        cred_dict = json.loads(stripped)
+        return credentials.Certificate(cred_dict)
+    else:
+        # File path
+        if not os.path.exists(stripped):
+            raise FileNotFoundError(
+                f"Firebase credential file not found: {stripped}\n"
+                "Tip: On Render, set the env var to the full JSON content instead of a file path."
+            )
+        return credentials.Certificate(stripped)
+
+
 def init_firebase_apps() -> None:
     """Initialise all three Firebase Admin SDK apps."""
     global _user_app, _staff_app, _admin_app
@@ -32,7 +63,7 @@ def init_firebase_apps() -> None:
     if not _user_app:
         try:
             _user_app = firebase_admin.initialize_app(
-                credentials.Certificate(settings.firebase_user_app_credentials),
+                _resolve_credential(settings.firebase_user_app_credentials),
                 {
                     "storageBucket": settings.user_app_storage_bucket,
                     "projectId": settings.firebase_user_app_project_id,
@@ -50,7 +81,7 @@ def init_firebase_apps() -> None:
     if not _staff_app:
         try:
             _staff_app = firebase_admin.initialize_app(
-                credentials.Certificate(settings.firebase_staff_credentials),
+                _resolve_credential(settings.firebase_staff_credentials),
                 {"projectId": settings.firebase_staff_project_id},
                 name="staff_app",
             )
@@ -64,7 +95,7 @@ def init_firebase_apps() -> None:
     if not _admin_app:
         try:
             _admin_app = firebase_admin.initialize_app(
-                credentials.Certificate(settings.firebase_admin_credentials),
+                _resolve_credential(settings.firebase_admin_credentials),
                 {"projectId": settings.firebase_admin_project_id},
                 name="admin_app",
             )

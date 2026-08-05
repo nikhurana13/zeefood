@@ -1,4 +1,4 @@
-name: Deploy Backend → Railway
+name: Deploy Backend → Render
 
 on:
   push:
@@ -7,18 +7,28 @@ on:
       - "backend/**"
       - ".github/workflows/deploy-backend.yml"
 
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:   # Allow manual trigger from GitHub UI
 
 jobs:
   deploy:
-    name: Build & Deploy Backend
+    name: Build & Deploy Backend to Render
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── Build & Push Docker Image to GHCR ──────────────────
+      # ── Trigger Render Deploy Hook ──────────────────────────
+      # Render auto-deploys on push to 'main' when connected to GitHub.
+      # This step is optional — it manually triggers a deploy via webhook.
+      # Add RENDER_DEPLOY_HOOK_URL as a GitHub secret for this to work.
+      - name: Trigger Render Deploy
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl -s "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          echo "✅ Render deploy triggered"
+
+      # ── Also push Docker image to GHCR (optional registry backup) ──
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -29,7 +39,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image to GHCR
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -40,15 +50,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # ── Deploy to Railway ───────────────────────────────────
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway
-        working-directory: backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway up --service zefood-backend --detach
-        # Required secrets in GitHub:
-        # RAILWAY_TOKEN — from Railway dashboard → Account → Tokens
+# ================================================================
+# Required GitHub Secrets (Settings → Secrets → Actions):
+# ─────────────────────────────────────────────────────────────
+# RENDER_DEPLOY_HOOK_URL  — From Render dashboard:
+#                           Service → Settings → Deploy Hook → Copy URL
+#
+# Note: Render also auto-deploys when it detects a push to your
+# connected GitHub branch. The deploy hook is just an extra trigger.
+# ================================================================

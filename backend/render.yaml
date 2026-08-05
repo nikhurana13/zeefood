@@ -1,0 +1,74 @@
+# ============================================================
+# ZEfood — Render.com Deployment Configuration
+# https://render.com/docs/blueprint-spec
+# ============================================================
+
+services:
+  # ── FastAPI Backend ──────────────────────────────────────
+  - type: web
+    name: zefood-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free               # upgrade to starter/standard for production
+    region: oregon           # options: oregon, frankfurt, singapore, ohio
+    branch: main
+    healthCheckPath: /health
+
+    envVars:
+      # ── App ──────────────────────────────────────────────
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: APP_HOST
+        value: "0.0.0.0"
+      - key: PORT
+        value: "8000"
+
+      # ── CORS (update these with your actual Vercel URLs) ──
+      - key: CORS_ORIGINS
+        value: "https://zefood-user.vercel.app,https://zefood-staff.vercel.app,https://zefood-admin.vercel.app"
+
+      # ── Firebase Project IDs ──────────────────────────────
+      - key: FIREBASE_USER_APP_PROJECT_ID
+        value: zeefood-c72cd
+      - key: FIREBASE_STAFF_PROJECT_ID
+        value: staff-1ac19
+      - key: FIREBASE_ADMIN_PROJECT_ID
+        value: admin-ca01a
+      - key: USER_APP_STORAGE_BUCKET
+        value: zeefood-c72cd.appspot.com
+
+      # ── Secrets (set these in Render Dashboard → Environment) ──
+      # PASTE THE FULL JSON CONTENT of each Firebase service account file
+      - key: FIREBASE_USER_APP_CREDENTIALS
+        sync: false          # must be set manually in Render dashboard
+      - key: FIREBASE_STAFF_CREDENTIALS
+        sync: false
+      - key: FIREBASE_ADMIN_CREDENTIALS
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+
+      # ── AI Models ────────────────────────────────────────
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: SENTIMENT_MODEL_ID
+        value: j-hartmann/emotion-english-distilroberta-base
+      - key: AUDIO_EMOTION_MODEL_ID
+        value: audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim
+      - key: WHISPER_MODEL_SIZE
+        value: base
+
+      # ── FAISS / RAG ───────────────────────────────────────
+      - key: FAISS_INDEX_PATH
+        value: ./data/faiss_index
+      - key: KNOWLEDGE_BASE_PATH
+        value: ./data/knowledge_base
