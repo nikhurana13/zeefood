@@ -29,7 +29,7 @@
 cd zefood
 git add .
 git commit -m "chore: prepare for deployment"
-git remote add origin https://github.com/nikhurana13/zeefood.git
+git remote add origin https://github.com/NiranjanHr59/zeefood.git
 git push -u origin main
 ```
 
